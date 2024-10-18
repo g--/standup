@@ -1,9 +1,20 @@
 package main
 
 import (
+	"github.com/alecthomas/kong"
 )
 
-func main() {
-	branchStatus()
+var CLI struct {
+	Branch struct {
+	} `cmd:"" help:"Branch status"`
 }
 
+func main() {
+	ctx := kong.Parse(&CLI)
+	switch ctx.Command() {
+	case "branch":
+		branchStatus()
+	default:
+		panic(ctx.Command())
+	}
+}
