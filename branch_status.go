@@ -1,17 +1,17 @@
 package main
 
 import (
-	"fmt"
 	"bytes"
-	"strings"
-	"sync"
+	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"regexp"
-	"encoding/json"
+	"strings"
+	"sync"
 
-	"github.com/savioxavier/termlink"
 	"github.com/cockroachdb/ttycolor"
+	"github.com/savioxavier/termlink"
 )
 
 func branchStatus() {
@@ -45,11 +45,10 @@ func branchStatus() {
 		pullRequestStatus(prStatusChan)
 	}()
 
-
 	wg.Wait()
 
-	jiraDetails, isJira := <- jiraDetailsChan
-	if isJira  {
+	jiraDetails, isJira := <-jiraDetailsChan
+	if isJira {
 		outputTitle("Ticket")
 		outputBody(jiraDetails)
 	} else {
@@ -84,7 +83,7 @@ func branchStatus() {
 
 	// uncommited: git status -s
 
-	pr, isPr := <- prStatusChan
+	pr, isPr := <-prStatusChan
 	if isPr {
 		outputTitle("Pull Request")
 		outputBody(termlink.Link(fmt.Sprintf("pr %d is in %s / %s", pr.Number, pr.State, pr.ReviewDecision), pr.Url))
@@ -92,7 +91,7 @@ func branchStatus() {
 }
 
 func mainBranch() (string, error) {
-    main, err := run([]string{"git", "rev-parse", "--abbrev-ref", "origin/HEAD"})
+	main, err := run([]string{"git", "rev-parse", "--abbrev-ref", "origin/HEAD"})
 	if err != nil {
 		return "", fmt.Errorf("couldn't get main branch: %v", err)
 	}
@@ -100,7 +99,7 @@ func mainBranch() (string, error) {
 }
 
 func getUncommitedFiles() (string, error) {
-    s, err := run([]string{
+	s, err := run([]string{
 		"git",
 		"status",
 		"-s",
@@ -114,12 +113,13 @@ func getUncommitedFiles() (string, error) {
 }
 
 var unindentTextRegexp *regexp.Regexp = regexp.MustCompile(`\n([ \t]+)`)
+
 func getCommitDetails() (string, error) {
-    main, err := mainBranch()
+	main, err := mainBranch()
 	if err != nil {
 		return "", err
 	}
-    commits, err := run([]string{
+	commits, err := run([]string{
 		"git",
 		"log",
 		"--format=reference",
@@ -133,7 +133,7 @@ func getCommitDetails() (string, error) {
 		return "", nil
 	}
 
-    filesChanged, err := run([]string{
+	filesChanged, err := run([]string{
 		"git",
 		"diff",
 		"--stat",
@@ -148,7 +148,6 @@ func getCommitDetails() (string, error) {
 
 	return fmt.Sprintf("%s\n%s", commits, filesChanged), nil
 }
-
 
 func outputTitle(s string) {
 	ttycolor.Stdout(ttycolor.Black)
@@ -165,10 +164,9 @@ func outputBody(s string) {
 	fmt.Printf("    %s\n\n", indented)
 }
 
-
 func run(args []string) (string, error) {
 	cmd := exec.Command(args[0], args[1:]...)
-	// out, err := cmd.Output() 
+	// out, err := cmd.Output()
 	var outb, errb bytes.Buffer
 	cmd.Stdout = &outb
 	cmd.Stderr = &errb
@@ -214,11 +212,11 @@ func getJiraDetails(ticket string) (string, error) {
 }
 
 type pullRequest struct {
-	Id string `json:"id"`
-	Number int `json:"number"`
+	Id             string `json:"id"`
+	Number         int    `json:"number"`
 	ReviewDecision string `json:"reviewDecision"`
-	State string `json:"state"`
-	Url string `json:"url"`
+	State          string `json:"state"`
+	Url            string `json:"url"`
 }
 
 func pullRequestStatus(c chan pullRequest) {
@@ -256,5 +254,3 @@ func prStatus() (*pullRequest, error) {
 
 	return &state, nil
 }
-
-
