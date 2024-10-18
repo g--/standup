@@ -14,10 +14,6 @@ import (
 	"github.com/cockroachdb/ttycolor"
 )
 
-func main() {
-	branchStatus()
-}
-
 func branchStatus() {
 	var branchName string
 	var err error
